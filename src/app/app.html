@@ -28,12 +28,9 @@
       <span class="control-label">Square size</span>
       <span class="control-value">{{ squareSize() }}px</span>
     </div>
-    <mat-slider>
+    <mat-slider [min]="80" [max]="250" [step]="10">
       <input
         matSliderThumb
-        [min]="80"
-        [max]="260"
-        [step]="10"
         [value]="squareSize()"
         (valueChange)="squareSize.set($event)"
         aria-label="Square size"
@@ -46,12 +43,9 @@
       <span class="control-label">Font size</span>
       <span class="control-value">{{ fontSize() }}px</span>
     </div>
-    <mat-slider>
+    <mat-slider [min]="32" [max]="120" [step]="2">
       <input
         matSliderThumb
-        [min]="32"
-        [max]="120"
-        [step]="2"
         [value]="fontSize()"
         (valueChange)="fontSize.set($event)"
         aria-label="Font size"
