@@ -49,5 +49,4 @@ wrangler.toml.local
 .DS_Store
 Thumbs.db
 scripts/
-public/
 .vscode/
