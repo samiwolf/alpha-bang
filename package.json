@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng build --configuration production && wrangler pages deploy dist/alphabang/browser --project-name=alpha-bang --branch=main"
+    "deploy": "ng build --configuration production && npx wrangler pages deploy dist/alphabang/browser --project-name=alpha-bang --branch=main"
   },
   "private": true,
   "packageManager": "npm@10.9.8",

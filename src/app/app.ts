@@ -56,14 +56,14 @@ const STORAGE_PREFIX = 'alphabang.';
 function persistedSignal<T>(
   key: string,
   fallback: T,
-  parse: (raw: string) => T,
+  parse: (value: unknown) => T,
 ): WritableSignal<T> {
   let initial = fallback;
   try {
     const raw = localStorage.getItem(STORAGE_PREFIX + key);
-    if (raw !== null) initial = parse(raw);
+    if (raw !== null) initial = parse(JSON.parse(raw));
   } catch {
-    // localStorage unavailable (e.g. SSR / disabled storage); use fallback.
+    // localStorage unavailable or corrupted; use fallback.
   }
   const sig = signal<T>(initial);
   effect(() => {
@@ -114,7 +114,7 @@ export class App {
 
   protected readonly squareSize = persistedSignal('squareSize', 150, Number);
   protected readonly fontSize = persistedSignal('fontSize', 68, Number);
-  protected readonly darkMode = persistedSignal('darkMode', false, (v) => v === 'true');
+  protected readonly darkMode = persistedSignal('darkMode', false, Boolean);
 
   protected readonly squareSizePx = computed(() => `${this.squareSize()}px`);
   protected readonly fontSizePx = computed(() => `${this.fontSize()}px`);
