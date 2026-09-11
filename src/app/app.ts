@@ -1,0 +1,138 @@
+import {
+  Component,
+  computed,
+  effect,
+  signal,
+  WritableSignal,
+} from '@angular/core';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatButtonToggleGroup, MatButtonToggle } from '@angular/material/button-toggle';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatDivider } from '@angular/material/divider';
+import { AUDIO_MANIFEST } from './audio-manifest';
+
+type Category = 'english' | 'swaraborno' | 'benjonborno' | 'banglaDigits' | 'digits';
+
+interface Tile {
+  char: string;
+  color: string;
+  combining: boolean;
+  src: string;
+}
+
+const LETTERS: Record<Category, string[]> = {
+  english: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  swaraborno: ['অ', 'আ', 'ই', 'ঈ', 'উ', 'ঊ', 'ঋ', 'এ', 'ঐ', 'ও', 'ঔ'],
+  benjonborno: [
+    'ক', 'খ', 'গ', 'ঘ', 'ঙ',
+    'চ', 'ছ', 'জ', 'ঝ', 'ঞ',
+    'ট', 'ঠ', 'ড', 'ঢ', 'ণ',
+    'ত', 'থ', 'দ', 'ধ', 'ন',
+    'প', 'ফ', 'ব', 'ভ', 'ম',
+    'য', 'র', 'ল', 'শ', 'ষ',
+    'স', 'হ', 'ড়', 'ঢ়', 'য়',
+    'ৎ', 'ং', 'ঃ', 'ঁ',
+  ],
+  banglaDigits: ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'],
+  digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+};
+
+const COMBINING = new Set(['ং', 'ঃ', 'ঁ']);
+
+const TILE_COLORS = ['#c62828', '#1565c0', '#2e7d32', '#6a1b9a', '#ef6c00', '#00838f'];
+
+const STORAGE_PREFIX = 'alphabang.';
+
+/**
+ * Creates a signal whose value is initialized from `localStorage` (if present)
+ * and persisted back to `localStorage` whenever it changes. Falls back to the
+ * provided default when storage is unavailable or empty.
+ */
+function persistedSignal<T>(
+  key: string,
+  fallback: T,
+  parse: (raw: string) => T,
+): WritableSignal<T> {
+  let initial = fallback;
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    if (raw !== null) initial = parse(raw);
+  } catch {
+    // localStorage unavailable (e.g. SSR / disabled storage); use fallback.
+  }
+  const sig = signal<T>(initial);
+  effect(() => {
+    try {
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(sig()));
+    } catch {
+      // Ignore write failures (e.g. private mode quota).
+    }
+  });
+  return sig;
+}
+
+@Component({
+  imports: [
+    MatToolbar,
+    MatButtonToggleGroup,
+    MatButtonToggle,
+    MatCard,
+    MatCardContent,
+    MatIconButton,
+    MatIcon,
+    MatMenu,
+    MatMenuTrigger,
+    MatSlider,
+    MatSliderThumb,
+    MatSlideToggle,
+    MatDivider,
+  ],
+  selector: 'app-root',
+  styleUrl: './app.css',
+  templateUrl: './app.html',
+})
+export class App {
+  protected readonly selected = persistedSignal<Category>(
+    'selected',
+    'english',
+    (v) => v as Category,
+  );
+  protected readonly tiles = computed<Tile[]>(() => {
+    const cat = this.selected();
+    return LETTERS[cat].map((char, i) => ({
+      char,
+      color: TILE_COLORS[i % TILE_COLORS.length],
+      combining: COMBINING.has(char),
+      src: `audio/${AUDIO_MANIFEST[`${cat}-${i}`] ?? `${cat}-${i}.wav`}`,
+    }));
+  });
+
+  protected readonly squareSize = persistedSignal('squareSize', 150, Number);
+  protected readonly fontSize = persistedSignal('fontSize', 68, Number);
+  protected readonly darkMode = persistedSignal('darkMode', false, (v) => v === 'true');
+
+  protected readonly squareSizePx = computed(() => `${this.squareSize()}px`);
+  protected readonly fontSizePx = computed(() => `${this.fontSize()}px`);
+  protected readonly gridTemplate = computed(
+    () => `repeat(auto-fill, minmax(${this.squareSize()}px, 1fr))`,
+  );
+
+  private currentAudio: HTMLAudioElement | null = null;
+
+  constructor() {
+    effect(() => {
+      document.body.style.colorScheme = this.darkMode() ? 'dark' : 'light';
+    });
+  }
+
+  protected play(src: string): void {
+    this.currentAudio?.pause();
+    this.currentAudio = new Audio(src);
+    this.currentAudio.play();
+  }
+}

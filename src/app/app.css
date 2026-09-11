@@ -1,0 +1,53 @@
+.nav-bar {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+}
+
+.letter-card {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: light-dark(#f5f0dc, #242424);
+  border-color: light-dark(#d8cfae, #3a3a3a);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.letter-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--mat-sys-level3);
+}
+
+.letter-card:active {
+  transform: translateY(-1px);
+}
+
+.letter-card mat-card-content {
+  font-size: var(--tile-font-size, 4.25rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+.ghost {
+  color: transparent;
+}
