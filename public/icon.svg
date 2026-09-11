@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1976d2"/>
+      <stop offset="0.55" stop-color="#1565c0"/>
+      <stop offset="1" stop-color="#00838f"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.32" cy="0.22" r="0.85">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glyph" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f5f0dc"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="112" ry="112" fill="url(#bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" ry="112" fill="url(#sheen)"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" ry="112" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2"/>
+
+  <text x="244" y="270" text-anchor="middle" dominant-baseline="central"
+        font-family="'Noto Sans Bengali','Noto Sans Bengali UI','Nirmala UI','Hind Siliguri','SolaimanLipi','Vrinda','Mukti Narrow','Bangla MN','Bangla Sangam MN',sans-serif"
+        font-size="296" font-weight="700" fill="url(#glyph)">অ</text>
+
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" opacity="0.92"
+     transform="rotate(-45 400 84)">
+    <path d="M370 82 a34 34 0 0 1 0 44" stroke-width="9"/>
+    <path d="M390 68 a58 58 0 0 1 0 72" stroke-width="9"/>
+    <path d="M410 54 a82 82 0 0 1 0 100" stroke-width="9"/>
+  </g>
+</svg>
