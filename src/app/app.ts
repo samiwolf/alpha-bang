@@ -9,12 +9,10 @@ import { MatToolbar } from '@angular/material/toolbar';
 import { MatButtonToggleGroup, MatButtonToggle } from '@angular/material/button-toggle';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatDivider } from '@angular/material/divider';
-import { AUDIO_MANIFEST } from './audio-manifest';
 
 type Category = 'english' | 'swaraborno' | 'benjonborno' | 'banglaDigits' | 'digits';
 
@@ -47,6 +45,15 @@ const COMBINING = new Set(['ং', 'ঃ', 'ঁ']);
 const TILE_COLORS = ['#c62828', '#1565c0', '#2e7d32', '#6a1b9a', '#ef6c00', '#00838f'];
 
 const STORAGE_PREFIX = 'alphabang.';
+
+/** Returns the OS dark-mode preference, defaulting to light when unavailable. */
+function prefersDarkColorScheme(): boolean {
+  try {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Creates a signal whose value is initialized from `localStorage` (if present)
@@ -84,7 +91,6 @@ function persistedSignal<T>(
     MatCard,
     MatCardContent,
     MatIconButton,
-    MatIcon,
     MatMenu,
     MatMenuTrigger,
     MatSlider,
@@ -100,7 +106,7 @@ export class App {
   protected readonly selected = persistedSignal<Category>(
     'selected',
     'english',
-    (v) => v as Category,
+    (v) => (typeof v === 'string' && v in LETTERS ? (v as Category) : 'english'),
   );
   protected readonly tiles = computed<Tile[]>(() => {
     const cat = this.selected();
@@ -108,13 +114,17 @@ export class App {
       char,
       color: TILE_COLORS[i % TILE_COLORS.length],
       combining: COMBINING.has(char),
-      src: `audio/${AUDIO_MANIFEST[`${cat}-${i}`] ?? `${cat}-${i}.wav`}`,
+      src: `audio/${cat}-${i}.wav`,
     }));
   });
 
   protected readonly squareSize = persistedSignal('squareSize', 150, Number);
   protected readonly fontSize = persistedSignal('fontSize', 68, Number);
-  protected readonly darkMode = persistedSignal('darkMode', false, Boolean);
+  protected readonly darkMode = persistedSignal(
+    'darkMode',
+    prefersDarkColorScheme(),
+    Boolean,
+  );
 
   protected readonly squareSizePx = computed(() => `${this.squareSize()}px`);
   protected readonly fontSizePx = computed(() => `${this.fontSize()}px`);
@@ -122,17 +132,37 @@ export class App {
     () => `repeat(auto-fill, minmax(${this.squareSize()}px, 1fr))`,
   );
 
+  private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
 
   constructor() {
     effect(() => {
       document.body.style.colorScheme = this.darkMode() ? 'dark' : 'light';
     });
+    // Preload the active category's audio so the first tap plays instantly.
+    effect(() => {
+      for (const tile of this.tiles()) this.audioFor(tile.src);
+    });
+  }
+
+  private audioFor(src: string): HTMLAudioElement {
+    let audio = this.audioCache.get(src);
+    if (!audio) {
+      audio = new Audio();
+      audio.preload = 'auto';
+      audio.src = src;
+      this.audioCache.set(src, audio);
+    }
+    return audio;
   }
 
   protected play(src: string): void {
     this.currentAudio?.pause();
-    this.currentAudio = new Audio(src);
-    this.currentAudio.play();
+    const audio = this.audioFor(src);
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+      // Playback can fail (autoplay policy, missing file); ignore.
+    });
+    this.currentAudio = audio;
   }
 }
