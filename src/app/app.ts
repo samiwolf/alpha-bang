@@ -126,10 +126,14 @@ export class App {
   );
 
   protected readonly squareSizePx = computed(() => `${this.squareSize()}px`);
-  protected readonly fontSizePx = computed(() => `${this.squareSize() * 0.8}px`);
+  protected readonly fontSizePx = computed(() => `${this.squareSize() * 0.7}px`);
   protected readonly gridTemplate = computed(
     () => `repeat(auto-fill, minmax(${this.squareSize()}px, 1fr))`,
   );
+
+  /** Character currently playing its pop animation, or null. */
+  protected readonly popping = signal<string | null>(null);
+  private popTimer: ReturnType<typeof setTimeout> | null = null;
 
   private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
