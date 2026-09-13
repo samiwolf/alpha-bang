@@ -154,13 +154,19 @@ export class App {
       audio = new Audio();
       audio.preload = 'auto';
       audio.src = src;
+      audio.load();
       this.audioCache.set(src, audio);
     }
     return audio;
   }
 
   protected play(src: string, char: string): void {
-    this.currentAudio?.pause();
+    // Stop the previous audio immediately: pause and rewind so it can't
+    // keep emitting sound while the new one starts.
+    if (this.currentAudio && this.currentAudio.src !== src) {
+      this.currentAudio.pause();
+      this.currentAudio.currentTime = 0;
+    }
     const audio = this.audioFor(src);
     audio.currentTime = 0;
     audio.play().catch(() => {
