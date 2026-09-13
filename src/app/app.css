@@ -20,6 +20,7 @@
   display: grid;
   gap: 20px;
   padding: 28px;
+  justify-content: center;
 }
 
 .letter-card {
@@ -43,8 +44,9 @@
 }
 
 .letter-card mat-card-content {
+  font-family: 'Purno BCC', sans-serif;
   font-size: var(--tile-font-size, 4.25rem);
-  font-weight: 600;
+  font-weight: 400;
   text-align: center;
   display: inline-block;
   transform-origin: center;

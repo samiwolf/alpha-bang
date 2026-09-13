@@ -1,4 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+@import '@hixbe/purno-bcc';
 
 /* Settings menu panel is rendered in a CDK overlay, so it must be styled globally. */
 .settings-menu.mat-mdc-menu-panel {

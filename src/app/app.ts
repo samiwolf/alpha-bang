@@ -126,9 +126,9 @@ export class App {
   );
 
   protected readonly squareSizePx = computed(() => `${this.squareSize()}px`);
-  protected readonly fontSizePx = computed(() => `${this.squareSize() * 0.7}px`);
+  protected readonly fontSizePx = computed(() => `${this.squareSize() * 0.8}px`);
   protected readonly gridTemplate = computed(
-    () => `repeat(auto-fill, minmax(${this.squareSize()}px, 1fr))`,
+    () => `repeat(auto-fill, ${this.squareSize()}px)`,
   );
 
   /** Character currently playing its pop animation, or null. */
