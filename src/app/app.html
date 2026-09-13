@@ -54,9 +54,10 @@
     <mat-card
       appearance="outlined"
       class="letter-card"
+      [class.popping]="popping() === tile.char"
       [style.color]="tile.color"
       [style.--tile-font-size]="fontSizePx()"
-      (click)="play(tile.src)"
+      (click)="play(tile.src, tile.char)"
     >
       <mat-card-content>
         @if (tile.combining) {

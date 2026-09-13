@@ -159,7 +159,7 @@ export class App {
     return audio;
   }
 
-  protected play(src: string): void {
+  protected play(src: string, char: string): void {
     this.currentAudio?.pause();
     const audio = this.audioFor(src);
     audio.currentTime = 0;
@@ -167,5 +167,11 @@ export class App {
       // Playback can fail (autoplay policy, missing file); ignore.
     });
     this.currentAudio = audio;
+
+    // Trigger the pop-out animation, restarting it on rapid re-clicks.
+    if (this.popTimer) clearTimeout(this.popTimer);
+    this.popping.set(null);
+    requestAnimationFrame(() => this.popping.set(char));
+    this.popTimer = setTimeout(() => this.popping.set(null), 450);
   }
 }
