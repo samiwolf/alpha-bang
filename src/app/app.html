@@ -2,17 +2,12 @@
   <span class="brand">AlphaBang</span>
   <span class="spacer"></span>
   @if (loading()) {
-    <span
-      class="preload-indicator"
-      [matBadge]="progressLabel()"
-      matBadgePosition="below after"
-      matBadgeSize="small"
-      aria-label="Audio loading progress"
-    >
+    <span class="preload-indicator" aria-label="Audio loading progress">
       <mat-progress-spinner
         [diameter]="24"
         [strokeWidth]="3"
-        mode="indeterminate"
+        mode="determinate"
+        [value]="progressPercent()"
       />
     </span>
   }

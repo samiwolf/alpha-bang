@@ -9,7 +9,6 @@ import { MatToolbar } from '@angular/material/toolbar';
 import { MatButtonToggleGroup, MatButtonToggle } from '@angular/material/button-toggle';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIconButton } from '@angular/material/button';
-import { MatBadge } from '@angular/material/badge';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
@@ -93,7 +92,6 @@ function persistedSignal<T>(
     MatCard,
     MatCardContent,
     MatIconButton,
-    MatBadge,
     MatMenu,
     MatMenuTrigger,
     MatSlider,
@@ -147,7 +145,9 @@ export class App {
     return this.tiles().filter((t) => set.has(t.src)).length;
   });
   protected readonly loading = computed(() => this.loadedCount() < this.total());
-  protected readonly progressLabel = computed(() => `${this.loadedCount()}/${this.total()}`);
+  protected readonly progressPercent = computed(() =>
+    this.total() === 0 ? 0 : (this.loadedCount() / this.total()) * 100,
+  );
 
   private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
