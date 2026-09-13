@@ -9,9 +9,11 @@ import { MatToolbar } from '@angular/material/toolbar';
 import { MatButtonToggleGroup, MatButtonToggle } from '@angular/material/button-toggle';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIconButton } from '@angular/material/button';
+import { MatBadge } from '@angular/material/badge';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatDivider } from '@angular/material/divider';
 
 type Category = 'english' | 'swaraborno' | 'benjonborno' | 'banglaDigits' | 'digits';
@@ -91,11 +93,13 @@ function persistedSignal<T>(
     MatCard,
     MatCardContent,
     MatIconButton,
+    MatBadge,
     MatMenu,
     MatMenuTrigger,
     MatSlider,
     MatSliderThumb,
     MatSlideToggle,
+    MatProgressSpinner,
     MatDivider,
   ],
   selector: 'app-root',
@@ -135,6 +139,16 @@ export class App {
   protected readonly popping = signal<string | null>(null);
   private popTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Audio sources that have finished preloading for the current page. */
+  protected readonly loaded = signal<ReadonlySet<string>>(new Set());
+  protected readonly total = computed(() => this.tiles().length);
+  protected readonly loadedCount = computed(() => {
+    const set = this.loaded();
+    return this.tiles().filter((t) => set.has(t.src)).length;
+  });
+  protected readonly loading = computed(() => this.loadedCount() < this.total());
+  protected readonly progressLabel = computed(() => `${this.loadedCount()}/${this.total()}`);
+
   private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
 
@@ -156,6 +170,15 @@ export class App {
       audio.src = src;
       audio.load();
       this.audioCache.set(src, audio);
+      const markLoaded = () => {
+        this.loaded.update((s) => (s.has(src) ? s : new Set(s).add(src)));
+      };
+      if (audio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        markLoaded();
+      } else {
+        audio.addEventListener('canplaythrough', markLoaded, { once: true });
+        audio.addEventListener('error', markLoaded, { once: true });
+      }
     }
     return audio;
   }
@@ -178,6 +201,6 @@ export class App {
     if (this.popTimer) clearTimeout(this.popTimer);
     this.popping.set(null);
     requestAnimationFrame(() => this.popping.set(char));
-    this.popTimer = setTimeout(() => this.popping.set(null), 450);
+    this.popTimer = setTimeout(() => this.popping.set(null), 500);
   }
 }
