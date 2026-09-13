@@ -119,7 +119,6 @@ export class App {
   });
 
   protected readonly squareSize = persistedSignal('squareSize', 150, Number);
-  protected readonly fontSize = persistedSignal('fontSize', 68, Number);
   protected readonly darkMode = persistedSignal(
     'darkMode',
     prefersDarkColorScheme(),
@@ -127,7 +126,7 @@ export class App {
   );
 
   protected readonly squareSizePx = computed(() => `${this.squareSize()}px`);
-  protected readonly fontSizePx = computed(() => `${this.fontSize()}px`);
+  protected readonly fontSizePx = computed(() => `${this.squareSize() * 0.8}px`);
   protected readonly gridTemplate = computed(
     () => `repeat(auto-fill, minmax(${this.squareSize()}px, 1fr))`,
   );
