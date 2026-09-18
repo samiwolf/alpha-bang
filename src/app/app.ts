@@ -116,7 +116,7 @@ export class App {
       char,
       color: TILE_COLORS[i % TILE_COLORS.length],
       combining: COMBINING.has(char),
-      src: `audio/${cat}-${i}.wav`,
+      src: `audio/${cat}-${i}.m4a`,
     }));
   });
 

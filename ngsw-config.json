@@ -22,7 +22,7 @@
       "installMode": "lazy",
       "updateMode": "lazy",
       "resources": {
-        "files": ["/**/*.wav"]
+        "files": ["/**/*.m4a"]
       }
     }
   ]
