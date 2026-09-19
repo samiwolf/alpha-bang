@@ -33,6 +33,7 @@
 
 .letter-card {
   aspect-ratio: 1;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,6 +49,13 @@
 .letter-card.dimmed {
   filter: blur(2px);
   cursor: default;
+  pointer-events: none;
+}
+
+.tile-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
   pointer-events: none;
 }
 

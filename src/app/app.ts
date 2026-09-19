@@ -24,6 +24,11 @@ interface Tile {
   src: string;
 }
 
+interface TileView extends Tile {
+  /** True while the tile's audio is still preloading. */
+  loading: boolean;
+}
+
 const LETTERS: Record<Category, string[]> = {
   english: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
   swaraborno: ['অ', 'আ', 'ই', 'ঈ', 'উ', 'ঊ', 'ঋ', 'এ', 'ঐ', 'ও', 'ঔ'],
@@ -123,6 +128,15 @@ export class App {
       color: TILE_COLORS[i % TILE_COLORS.length],
       combining: COMBINING.has(char),
       src: `audio/${cat}-${i}.m4a`,
+    }));
+  });
+
+  /** Tiles plus per-tile loading state for the template. */
+  protected readonly tileViews = computed<TileView[]>(() => {
+    const loaded = this.loaded();
+    return this.tiles().map((tile) => ({
+      ...tile,
+      loading: !loaded.has(tile.src),
     }));
   });
 
@@ -236,6 +250,9 @@ export class App {
   protected play(src: string, char: string): void {
     // While a sound is playing, all taps are ignored until it finishes.
     if (this.playingChar() !== null) return;
+    // Taps on tiles whose audio hasn't finished preloading do nothing;
+    // playing now would leave the grid locked with no sound.
+    if (!this.loaded().has(src)) return;
 
     // Stop the previous audio immediately: pause and rewind so it can't
     // keep emitting sound while the new one starts.

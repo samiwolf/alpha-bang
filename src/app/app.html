@@ -60,7 +60,7 @@
 </mat-menu>
 
 <main class="grid" [style.grid-template-columns]="gridTemplate()">
-  @for (tile of tiles(); track tile.char) {
+  @for (tile of tileViews(); track tile.char) {
     <mat-card
       appearance="outlined"
       class="letter-card"
@@ -76,6 +76,15 @@
         }
         {{ tile.char }}
       </mat-card-content>
+      @if (tile.loading) {
+        <mat-progress-spinner
+          class="tile-spinner"
+          [diameter]="28"
+          [strokeWidth]="3"
+          mode="indeterminate"
+          aria-label="Loading audio"
+        />
+      }
     </mat-card>
   }
 </main>
