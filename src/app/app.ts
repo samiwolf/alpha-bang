@@ -103,6 +103,12 @@ function persistedSignal<T>(
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
+  host: {
+    '(document:gesturestart)': 'onGesture($event)',
+    '(document:gesturechange)': 'onGesture($event)',
+    '(document:gestureend)': 'onGesture($event)',
+    '(document:keydown)': 'onKeydown($event)',
+  },
 })
 export class App {
   protected readonly selected = persistedSignal<Category>(
@@ -170,6 +176,28 @@ export class App {
       this.selected();
       this.stopPlayback();
     });
+    // Block ctrl+scroll / trackpad-pinch zoom. Registered manually because
+    // Chrome treats document-level wheel listeners as passive by default,
+    // which would make preventDefault() a no-op.
+    document.addEventListener(
+      'wheel',
+      (event) => {
+        if (event.ctrlKey) event.preventDefault();
+      },
+      { passive: false },
+    );
+  }
+
+  /** Blocks pinch-zoom gestures (iOS Safari ignores user-scalable=no). */
+  protected onGesture(event: Event): void {
+    event.preventDefault();
+  }
+
+  /** Blocks ctrl +/-/0 browser zoom shortcuts. */
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.ctrlKey && ['+', '-', '=', '0'].includes(event.key)) {
+      event.preventDefault();
+    }
   }
 
   private stopPlayback(): void {

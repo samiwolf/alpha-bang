@@ -1,6 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
 @import '@hixbe/purno-bcc';
 
+/* Prevent rubber-band overscroll, pull-to-refresh, and double-tap zoom.
+   Vertical scrolling stays available for the tile grid. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+body {
+  touch-action: manipulation;
+}
+
 /* Settings menu panel is rendered in a CDK overlay, so it must be styled globally. */
 .settings-menu.mat-mdc-menu-panel {
   max-width: 340px;
