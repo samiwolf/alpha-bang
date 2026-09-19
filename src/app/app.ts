@@ -2,6 +2,7 @@ import {
   Component,
   computed,
   effect,
+  inject,
   signal,
   WritableSignal,
 } from '@angular/core';
@@ -14,6 +15,7 @@ import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatDivider } from '@angular/material/divider';
+import { SwUpdate } from '@angular/service-worker';
 
 type Category = 'english' | 'swaraborno' | 'benjonborno' | 'banglaDigits' | 'digits';
 
@@ -176,6 +178,12 @@ export class App {
   private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
 
+  /** Set when the service worker has downloaded a new app version; the app
+   *  reloads into it as soon as no audio is playing. */
+  private readonly pendingReload = signal(false);
+  /** Null in dev mode, where the service worker is disabled. */
+  private readonly swUpdates = inject(SwUpdate, { optional: true });
+
   constructor() {
     effect(() => {
       document.body.style.colorScheme = this.darkMode() ? 'dark' : 'light';
@@ -189,6 +197,34 @@ export class App {
     effect(() => {
       this.selected();
       this.stopPlayback();
+    });
+    // Pick up newly deployed versions: the service worker downloads them in
+    // the background and we reload once the grid is idle. Without this, an
+    // installed PWA keeps running the old version until it's force-killed.
+    const updates = this.swUpdates;
+    if (updates) {
+      let bootVersion: string | null = null;
+      updates.versionUpdates.subscribe((evt) => {
+        if (evt.type !== 'VERSION_READY') return;
+        // The first VERSION_READY describes the version we booted with;
+        // only a different hash means a fresh deploy arrived.
+        if (bootVersion === null) {
+          bootVersion = evt.latestVersion.hash;
+        } else if (evt.latestVersion.hash !== bootVersion) {
+          this.pendingReload.set(true);
+        }
+      });
+      updates.unrecoverable.subscribe(() => location.reload());
+      // ngsw only re-checks on navigation and every ~8h; poll so a
+      // long-lived standalone PWA notices deploys sooner.
+      setInterval(() => {
+        updates.checkForUpdate().catch(() => {});
+      }, 30 * 60 * 1000);
+    }
+    effect(() => {
+      if (this.pendingReload() && this.playingChar() === null) {
+        location.reload();
+      }
     });
     // Block ctrl+scroll / trackpad-pinch zoom. Registered manually because
     // Chrome treats document-level wheel listeners as passive by default,
