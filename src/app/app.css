@@ -39,7 +39,16 @@
   background: light-dark(#f5f0dc, #242424);
   border-color: light-dark(#d8cfae, #3a3a3a);
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.letter-card.dimmed {
+  filter: blur(2px);
+  cursor: default;
+  pointer-events: none;
 }
 
 .letter-card:hover {

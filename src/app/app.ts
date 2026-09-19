@@ -137,6 +137,10 @@ export class App {
   protected readonly popping = signal<string | null>(null);
   private popTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Character whose audio is currently playing, or null. Other tiles are
+   *  blurred and ignore taps while this is set. */
+  protected readonly playingChar = signal<string | null>(null);
+
   /** Audio sources that have finished preloading for the current page. */
   protected readonly loaded = signal<ReadonlySet<string>>(new Set());
   protected readonly total = computed(() => this.tiles().length);
@@ -160,6 +164,21 @@ export class App {
     effect(() => {
       for (const tile of this.tiles()) this.audioFor(tile.src);
     });
+    // Stop playback when the category changes so the new grid isn't stuck
+    // blurred waiting for a sound from the previous one.
+    effect(() => {
+      this.selected();
+      this.stopPlayback();
+    });
+  }
+
+  private stopPlayback(): void {
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio.currentTime = 0;
+      this.currentAudio = null;
+    }
+    this.playingChar.set(null);
   }
 
   private audioFor(src: string): HTMLAudioElement {
@@ -179,11 +198,17 @@ export class App {
         audio.addEventListener('canplaythrough', markLoaded, { once: true });
         audio.addEventListener('error', markLoaded, { once: true });
       }
+      audio.addEventListener('ended', () => {
+        if (this.currentAudio === audio) this.playingChar.set(null);
+      });
     }
     return audio;
   }
 
   protected play(src: string, char: string): void {
+    // While a sound is playing, all taps are ignored until it finishes.
+    if (this.playingChar() !== null) return;
+
     // Stop the previous audio immediately: pause and rewind so it can't
     // keep emitting sound while the new one starts.
     if (this.currentAudio && this.currentAudio.src !== src) {
@@ -192,8 +217,10 @@ export class App {
     }
     const audio = this.audioFor(src);
     audio.currentTime = 0;
+    this.playingChar.set(char);
     audio.play().catch(() => {
       // Playback can fail (autoplay policy, missing file); ignore.
+      this.playingChar.set(null);
     });
     this.currentAudio = audio;
 

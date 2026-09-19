@@ -65,6 +65,7 @@
       appearance="outlined"
       class="letter-card"
       [class.popping]="popping() === tile.char"
+      [class.dimmed]="playingChar() !== null && playingChar() !== tile.char"
       [style.color]="tile.color"
       [style.--tile-font-size]="fontSizePx()"
       (click)="play(tile.src, tile.char)"
