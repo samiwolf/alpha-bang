@@ -68,7 +68,10 @@
       [class.dimmed]="playingChar() !== null && playingChar() !== tile.char"
       [style.color]="tile.color"
       [style.--tile-font-size]="fontSizePx()"
-      (click)="play(tile.src, tile.char)"
+      (touchstart)="onTileTouchStart($event)"
+      (touchend)="onTileTouchEnd($event, tile.src, tile.char)"
+      (touchcancel)="onTileTouchCancel()"
+      (click)="onTileClick(tile.src, tile.char)"
     >
       <mat-card-content>
         @if (tile.combining) {

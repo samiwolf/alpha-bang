@@ -155,12 +155,17 @@ export class App {
     () => `repeat(auto-fill, ${this.squareSize()}px)`,
   );
 
-  /** Character currently playing its pop animation, or null. */
+
+  protected readonly tapSlopPx = computed(() => (this.squareSize() * 4) / 5);
+
   protected readonly popping = signal<string | null>(null);
   private popTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /** Character whose audio is currently playing, or null. Other tiles are
-   *  blurred and ignore taps while this is set. */
+
+  private tapStart: { x: number; y: number } | null = null;
+  
+  private ignoreClick = false;
+
   protected readonly playingChar = signal<string | null>(null);
 
   /** Audio sources that have finished preloading for the current page. */
@@ -248,6 +253,40 @@ export class App {
     if (event.ctrlKey && ['+', '-', '=', '0'].includes(event.key)) {
       event.preventDefault();
     }
+  }
+
+  protected onTileTouchStart(event: TouchEvent): void {
+    // Only a single-finger touch can be a tap; anything else is a zoom gesture.
+    this.tapStart =
+      event.touches.length === 1
+        ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+        : null;
+  }
+
+  protected onTileTouchEnd(event: TouchEvent, src: string, char: string): void {
+    const start = this.tapStart;
+    this.tapStart = null;
+    // Wait for every finger to lift so a pinch never plays a tile.
+    if (!start || event.touches.length > 0) return;
+    const touch = event.changedTouches[0];
+    const moved = Math.hypot(touch.clientX - start.x, touch.clientY - start.y);
+    // A light swipe drifts a few pixels and should still register; travel
+    // beyond the slop is a deliberate scroll, so let the browser handle it.
+    if (moved > this.tapSlopPx()) return;
+    // Suppress the click the browser would otherwise synthesize for this tap.
+    if (event.cancelable) event.preventDefault();
+    this.ignoreClick = true;
+    setTimeout(() => (this.ignoreClick = false), 500);
+    this.play(src, char);
+  }
+
+  protected onTileTouchCancel(): void {
+    this.tapStart = null;
+  }
+
+  protected onTileClick(src: string, char: string): void {
+    if (this.ignoreClick) return;
+    this.play(src, char);
   }
 
   private stopPlayback(): void {
