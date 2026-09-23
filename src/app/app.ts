@@ -115,6 +115,7 @@ function persistedSignal<T>(
     '(document:gesturechange)': 'onGesture($event)',
     '(document:gestureend)': 'onGesture($event)',
     '(document:keydown)': 'onKeydown($event)',
+    '(document:visibilitychange)': 'onVisibilityChange()',
   },
 })
 export class App {
@@ -182,6 +183,7 @@ export class App {
 
   private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
+  private playbackId = 0;
 
   /** Set when the service worker has downloaded a new app version; the app
    *  reloads into it as soon as no audio is playing. */
@@ -255,6 +257,10 @@ export class App {
     }
   }
 
+  protected onVisibilityChange(): void {
+    if (document.hidden) this.stopPlayback();
+  }
+
   protected onTileTouchStart(event: TouchEvent): void {
     // Only a single-finger touch can be a tap; anything else is a zoom gesture.
     this.tapStart =
@@ -290,34 +296,48 @@ export class App {
   }
 
   private stopPlayback(): void {
-    if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio.currentTime = 0;
-      this.currentAudio = null;
+    const audio = this.currentAudio;
+    this.currentAudio = null;
+    this.playbackId++;
+    this.playingChar.set(null);
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
     }
+  }
+
+  private finishPlayback(audio: HTMLAudioElement): void {
+    if (this.currentAudio !== audio) return;
+    this.currentAudio = null;
+    this.playbackId++;
     this.playingChar.set(null);
   }
 
   private audioFor(src: string): HTMLAudioElement {
     let audio = this.audioCache.get(src);
     if (!audio) {
-      audio = new Audio();
-      audio.preload = 'auto';
-      audio.src = src;
-      audio.load();
-      this.audioCache.set(src, audio);
+      const createdAudio = new Audio();
+      audio = createdAudio;
+      createdAudio.preload = 'auto';
+      createdAudio.src = src;
+      createdAudio.load();
+      this.audioCache.set(src, createdAudio);
       const markLoaded = () => {
         this.loaded.update((s) => (s.has(src) ? s : new Set(s).add(src)));
       };
-      if (audio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+      if (createdAudio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
         markLoaded();
       } else {
-        audio.addEventListener('canplaythrough', markLoaded, { once: true });
-        audio.addEventListener('error', markLoaded, { once: true });
+        createdAudio.addEventListener('canplaythrough', markLoaded, { once: true });
+        createdAudio.addEventListener('error', markLoaded, { once: true });
       }
-      audio.addEventListener('ended', () => {
-        if (this.currentAudio === audio) this.playingChar.set(null);
+      createdAudio.addEventListener('ended', () => {
+        if (createdAudio.ended) this.finishPlayback(createdAudio);
       });
+      createdAudio.addEventListener('pause', () => {
+        if (createdAudio.paused) this.finishPlayback(createdAudio);
+      });
+      createdAudio.addEventListener('error', () => this.finishPlayback(createdAudio));
     }
     return audio;
   }
@@ -337,12 +357,14 @@ export class App {
     }
     const audio = this.audioFor(src);
     audio.currentTime = 0;
+    const playbackId = ++this.playbackId;
+    this.currentAudio = audio;
     this.playingChar.set(char);
     audio.play().catch(() => {
-      // Playback can fail (autoplay policy, missing file); ignore.
+      if (this.playbackId !== playbackId || this.currentAudio !== audio) return;
+      this.currentAudio = null;
       this.playingChar.set(null);
     });
-    this.currentAudio = audio;
 
     // Trigger the pop-out animation, restarting it on rapid re-clicks.
     if (this.popTimer) clearTimeout(this.popTimer);
