@@ -182,6 +182,7 @@ export class App {
   private audioCache = new Map<string, HTMLAudioElement>();
   private currentAudio: HTMLAudioElement | null = null;
   private playbackId = 0;
+  private playbackTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     effect(() => {
@@ -260,6 +261,7 @@ export class App {
   }
 
   private stopPlayback(): void {
+    this.clearPlaybackTimer();
     const audio = this.currentAudio;
     this.currentAudio = null;
     this.playbackId++;
@@ -272,9 +274,26 @@ export class App {
 
   private finishPlayback(audio: HTMLAudioElement): void {
     if (this.currentAudio !== audio) return;
+    this.clearPlaybackTimer();
     this.currentAudio = null;
     this.playbackId++;
     this.playingChar.set(null);
+  }
+
+  private schedulePlaybackTimer(audio: HTMLAudioElement, playbackId: number): void {
+    this.clearPlaybackTimer();
+    const durationMs = Number.isFinite(audio.duration) ? audio.duration * 1000 : 5000;
+    this.playbackTimer = setTimeout(() => {
+      this.playbackTimer = null;
+      if (this.playbackId !== playbackId) return;
+      this.stopPlayback();
+    }, durationMs + 3000);
+  }
+
+  private clearPlaybackTimer(): void {
+    if (this.playbackTimer === null) return;
+    clearTimeout(this.playbackTimer);
+    this.playbackTimer = null;
   }
 
   private audioFor(src: string): HTMLAudioElement {
@@ -312,6 +331,10 @@ export class App {
     // Taps on tiles whose audio hasn't finished preloading do nothing;
     // playing now would leave the grid locked with no sound.
     if (!this.loaded().has(src)) return;
+    // Starting playback while the page is hidden can wedge the play()
+    // promise forever in some browsers (the tab was mid-switch when the
+    // tap landed), which would leave the grid permanently locked.
+    if (document.hidden) return;
 
     // Stop the previous audio immediately: pause and rewind so it can't
     // keep emitting sound while the new one starts.
@@ -324,6 +347,7 @@ export class App {
     const playbackId = ++this.playbackId;
     this.currentAudio = audio;
     this.playingChar.set(char);
+    this.schedulePlaybackTimer(audio, playbackId);
     audio.play().catch(() => {
       if (this.playbackId !== playbackId || this.currentAudio !== audio) return;
       this.currentAudio = null;
