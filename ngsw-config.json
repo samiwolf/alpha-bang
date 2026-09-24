@@ -19,8 +19,8 @@
     },
     {
       "name": "audio",
-      "installMode": "prefetch",
-      "updateMode": "prefetch",
+      "installMode": "lazy",
+      "updateMode": "lazy",
       "resources": {
         "files": ["/**/*.m4a"]
       }
